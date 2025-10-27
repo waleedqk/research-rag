@@ -37,6 +37,15 @@ Research RAG Assistant is a CLI-first productivity tool for working with researc
 $ git clone https://github.com/your-org/research-rag.git
 $ cd research-rag
 
+# Install uv (if you don't have it yet)
+$ python3 -m pip install uv
+
+# Create a virtual environment in a desired location, for example:
+$ python3 -m uv venv ~/uvs/research-rag-venv
+
+# Activate the virtual environment
+$ source ~/uvs/research-rag-venv/bin/activate
+
 # Install dependencies
 $ uv sync
 ```
