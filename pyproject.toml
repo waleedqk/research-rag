@@ -1,0 +1,55 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "research-rag"
+version = "0.1.0"
+description = "CLI-first research assistant for PDFs and CSV highlights"
+readme = "README.md"
+authors = [{ name = "Research RAG Team" }]
+requires-python = ">=3.10"
+dynamic = ["dependencies"]
+
+[project.optional-dependencies]
+web = [
+    "fastapi",
+    "uvicorn",
+]
+vector = [
+    "chromadb",
+    "sentence-transformers",
+]
+openai = [
+    "openai",
+]
+ollama = [
+    "ollama",
+]
+dev = [
+    "pytest",
+    "pytest-cov",
+    "ruff",
+    "mypy",
+]
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.dynamic]
+dependencies = { file = ["requirements/core.txt"] }
+
+[tool.ruff]
+line-length = 100
+
+[tool.mypy]
+python_version = "3.10"
+strict = true
+
+[tool.pytest.ini_options]
+minversion = "7.0"
+addopts = "-ra -q"
+testpaths = ["tests"]
