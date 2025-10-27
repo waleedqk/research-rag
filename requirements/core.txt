@@ -1,0 +1,12 @@
+pydantic
+pydantic-settings
+typer
+rich
+python-dotenv
+pyyaml
+loguru
+tqdm
+pandas
+tabulate
+pymupdf
+rapidfuzz

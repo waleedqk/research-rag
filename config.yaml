@@ -1,0 +1,18 @@
+# Default configuration profile for the Research RAG assistant.
+app:
+  name: "research-rag"
+  env: "dev"
+  log_level: "INFO"
+
+providers:
+  llm: "openai"
+  embeddings: "sentence-transformers"
+  vector_store: "chromadb"
+
+data:
+  source_dir: "data/source"
+  derived_dir: "data/derived"
+
+features:
+  enable_web: true
+  enable_cli: true
