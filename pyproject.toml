@@ -11,6 +11,9 @@ authors = [{ name = "Research RAG Team" }]
 requires-python = ">=3.10"
 dynamic = ["dependencies"]
 
+[project.scripts]
+research-rag = "research_rag.cli.__main__:run"
+
 [project.optional-dependencies]
 web = [
     "fastapi",

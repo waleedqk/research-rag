@@ -32,6 +32,10 @@ Research RAG Assistant is a CLI-first productivity tool for working with researc
 
 ### Installation
 
+> **Note**
+> The `--active` flag tells `uv` to use the currently activated virtual environment. As an alternative, you can set the `UV_PROJECT_ENVIRONMENT` environment variable to the path of your virtual environment.
+> Set the env var `export UV_PROJECT_ENVIRONMENT=~/uvs/research-rag-venv`
+
 ```bash
 # Clone the repository
 $ git clone https://github.com/your-org/research-rag.git
@@ -46,8 +50,9 @@ $ python3 -m uv venv ~/uvs/research-rag-venv
 # Activate the virtual environment
 $ source ~/uvs/research-rag-venv/bin/activate
 
-# Install dependencies
-$ uv sync
+# Install dependencies and the project in editable mode
+$ uv sync --active
+$ uv pip install -e . --active
 ```
 
 ### Configuration
@@ -68,16 +73,19 @@ All commands support the global `--config` and `--debug` options.
 
 ```bash
 # View CLI help
-$ uv run research-rag --help
+$ uv run --active research-rag --help
+
+# Rank paper relevance for a query
+$ uv run --active research-rag relevance "self-supervised learning for computer vision" /path/to/papers.csv
 
 # Ingest documents (placeholder)
-$ uv run research-rag ingest /path/to/paper.pdf --csv /path/to/metadata.csv
+$ uv run --active research-rag ingest /path/to/paper.pdf --csv /path/to/metadata.csv
 
 # Search indexed documents (placeholder)
-$ uv run research-rag search "attention is all you need" --top-k 5
+$ uv run --active research-rag search "attention is all you need" --top-k 5
 
 # Ask a question (placeholder)
-$ uv run research-rag ask "Summarize the main contributions" --top-k 5
+$ uv run --active research-rag ask "Summarize the main contributions" --top-k 5
 ```
 
 ## Web API
