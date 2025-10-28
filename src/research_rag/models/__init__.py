@@ -1,14 +1,13 @@
-"""Pydantic models describing shared data contracts."""
+"""Data models describing shared application contracts."""
 
-from .papers import Citation, IndexedDoc, Paper, PaperContent
+from .papers import PaperRelevanceResponse, PaperRelevanceScore, PaperSummary
 from .search import SearchFilters, SearchHit, SearchQuery
 from .chat import ChatRequest, Message
 
 __all__ = [
-    "Citation",
-    "IndexedDoc",
-    "Paper",
-    "PaperContent",
+    "PaperSummary",
+    "PaperRelevanceScore",
+    "PaperRelevanceResponse",
     "SearchFilters",
     "SearchHit",
     "SearchQuery",
