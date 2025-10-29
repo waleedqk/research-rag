@@ -1,12 +1,25 @@
 """Typer application exposing the command-line interface."""
 
-from src.research_rag.core.config import settings
-import typer
+from __future__ import annotations
+
 from pathlib import Path
-from research_rag.core.config.settings import load_settings
+from typing import Optional
+
+import typer
+
+from research_rag.core.config import AppSettings, load_settings
+from research_rag.core.services.relevance import PaperRelevanceService
 
 
 app = typer.Typer(help="CLI entry point for the Research RAG assistant.")
+
+
+def _resolve_settings(ctx: typer.Context) -> AppSettings:
+    settings: Optional[AppSettings] = ctx.obj
+    if settings is None:
+        settings = load_settings()
+        ctx.obj = settings
+    return settings
 
 
 @app.callback(invoke_without_command=True)
@@ -16,7 +29,9 @@ def main(
     debug: bool = typer.Option(False, help="Enable verbose logging."),
 ) -> None:
     """Root CLI callback responsible for wiring global options."""
-    ctx.obj = load_settings(config)
+
+    settings = load_settings(config)
+    ctx.obj = settings
 
 
 @app.command()
@@ -55,27 +70,73 @@ def relevance(
     csv_path: Path = typer.Argument(
         ..., help="Path to the CSV file with paper metadata."
     ),
+    output_dir: Optional[Path] = typer.Option(
+        None,
+        "--output-dir",
+        "-o",
+        help="Directory to store JSON summaries (defaults to config or CSV parent).",
+    ),
+    top_k: int = typer.Option(
+        5,
+        "--top-k",
+        "-k",
+        min=1,
+        help="Maximum number of results to display in the terminal.",
+    ),
 ) -> None:
     """Ranks papers from a CSV file based on a query."""
-    from research_rag.adapters.llm_providers.ollama import OllamaLLMProvider, OpenAILLMProvider
-    from research_rag.core.services.relevance import PaperRelevanceService
+    from importlib import import_module
 
-    # settings = ctx.obj
-    # Now you can use settings to configure your provider, e.g.:
-    # llm_provider = OllamaLLMProvider(model=settings.llm.model)
+    settings = _resolve_settings(ctx)
 
-    # This is a simplified setup. In a real app, you'd get this from config.
-    llm_provider = OpenAILLMProvider(model="llama3", api_key=settings.llm.api_key)
-    service = PaperRelevanceService(llm_provider=llm_provider)
+    provider_name = settings.llm.provider
+    llm_provider = None
+
+    if provider_name == "openai":
+        try:
+            module = import_module("research_rag.adapters.llm_providers.openai")
+            OpenAILLMProvider = getattr(module, "OpenAILLMProvider")
+        except (ImportError, AttributeError) as exc:  # pragma: no cover - runtime safeguard
+            raise typer.BadParameter(
+                "OpenAI provider requires the optional 'openai' dependency."
+            ) from exc
+        if not settings.llm.model:
+            raise typer.BadParameter("LLM model must be configured for the OpenAI provider")
+        llm_provider = OpenAILLMProvider(
+            model=settings.llm.model,
+            api_key=settings.llm.api_key,
+        )
+    elif provider_name == "ollama":
+        try:
+            module = import_module("research_rag.adapters.llm_providers.ollama")
+            OllamaLLMProvider = getattr(module, "OllamaLLMProvider")
+        except (ImportError, AttributeError) as exc:  # pragma: no cover - runtime safeguard
+            raise typer.BadParameter(
+                "Ollama provider requires the optional 'ollama' dependency."
+            ) from exc
+        if not settings.llm.model:
+            raise typer.BadParameter("LLM model must be configured for the Ollama provider")
+        llm_provider = OllamaLLMProvider(model=settings.llm.model, host=settings.llm.host)
+
+    service = PaperRelevanceService(
+        llm_provider=llm_provider,
+        output_directory=output_dir or settings.data.output_directory,
+    )
 
     try:
-        response = service.rank_papers(query=query, csv_path=csv_path)
+        response = service.rank_papers(
+            query=query,
+            csv_path=csv_path,
+            pdf_dir=settings.data.pdf_directory,
+            output_dir=output_dir,
+        )
         if not response.results:
             print("No relevant papers found.")
             return
 
-        print(f"Found {len(response.results)} relevant papers for '{query}':")
-        for result in response.results:
+        total = len(response.results)
+        print(f"Found {total} relevant papers for '{query}':")
+        for result in response.results[:top_k]:
             print(f"  - {result.paper_title} (Score: {result.score:.2f})")
 
         if response.output_path:
