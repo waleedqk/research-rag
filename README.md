@@ -30,62 +30,58 @@ Research RAG Assistant is a CLI-first productivity tool for working with researc
 - Python 3.10+
 - [uv](https://github.com/astral-sh/uv) for dependency management
 
-### Installation
+### Setup
 
-> **Note**
-> The `--active` flag tells `uv` to use the currently activated virtual environment. As an alternative, you can set the `UV_PROJECT_ENVIRONMENT` environment variable to the path of your virtual environment.
-> Set the env var `export UV_PROJECT_ENVIRONMENT=~/uvs/research-rag-venv`
-
-```bash
-# Clone the repository
-$ git clone https://github.com/your-org/research-rag.git
-$ cd research-rag
-
-# Install uv (if you don't have it yet)
-$ python3 -m pip install uv
-
-# Create a virtual environment in a desired location, for example:
-$ python3 -m uv venv ~/uvs/research-rag-venv
-
-# Activate the virtual environment
-$ source ~/uvs/research-rag-venv/bin/activate
-
-# Install dependencies and the project in editable mode
-$ uv sync --active
-$ uv pip install -e . --active
-```
-
-### Configuration
+1. Clone the repository and move into the project directory.
+2. Copy `.env.example` to `.env` and adjust values if desired. By default the file pins `UV_PROJECT_ENVIRONMENT=.venv/uv`, which tells `uv` exactly where to create the virtual environment for this project.
+3. Install [uv](https://github.com/astral-sh/uv) if you have not already done so (`python3 -m pip install uv`).
+4. Source the `.env` file to export the virtual environment path and other configuration defaults.
+5. Run `uv sync` to create/populate the environment at `UV_PROJECT_ENVIRONMENT`.
+6. Activate the environment so the `research-rag` CLI is available on your `$PATH`.
 
 ```bash
-# Copy the example environment file
-$ cp .env.example .env
+git clone https://github.com/your-org/research-rag.git
+cd research-rag
 
-# Edit configuration defaults
-$ ${EDITOR:-nano} config.yaml
+cp .env.example .env
+source .env
+
+# installs dependencies into the path defined by UV_PROJECT_ENVIRONMENT
+uv sync
+
+# make the CLI script available
+source "$UV_PROJECT_ENVIRONMENT/bin/activate"
 ```
 
-Configuration precedence: CLI flags > environment variables > `config.yaml` defaults. Set `APP_ENV` to `dev`, `test`, or `prod` to toggle profiles.
+Configuration precedence: CLI flags > environment variables > `config.yaml` defaults. Set `APP_ENV` to `dev`, `test`, or `prod` to toggle profiles. Update `OPENAI_API_KEY` and switch `LLM_PROVIDER` to `openai` (or `ollama`) if you want to call an external model instead of the built-in local scorer.
+
+### Sample data
+
+The repository includes a tiny CSV in `data/examples/computer_vision.csv` that you can use to smoke-test the relevance workflow. Running the relevance command will also write a JSON summary to `data/derived/relevance/` (configurable via `OUTPUT_DIRECTORY` or the `--output-dir` flag).
 
 ## CLI Usage
 
 All commands support the global `--config` and `--debug` options.
 
 ```bash
-# View CLI help
-$ uv run --active research-rag --help
+# View CLI help (environment must be activated first)
+$ research-rag --help
 
-# Rank paper relevance for a query
-$ uv run --active research-rag relevance "self-supervised learning for computer vision" /path/to/papers.csv
+# Rank paper relevance for a query using the sample CSV
+$ research-rag relevance "self-supervised learning for computer vision" data/examples/computer_vision.csv
+
+# Limit results and override the output directory
+$ research-rag relevance "self-supervised learning for computer vision" \
+    data/examples/computer_vision.csv --top-k 3 --output-dir ./data/derived/custom
 
 # Ingest documents (placeholder)
-$ uv run --active research-rag ingest /path/to/paper.pdf --csv /path/to/metadata.csv
+$ research-rag ingest /path/to/paper.pdf --csv /path/to/metadata.csv
 
 # Search indexed documents (placeholder)
-$ uv run --active research-rag search "attention is all you need" --top-k 5
+$ research-rag search "attention is all you need" --top-k 5
 
 # Ask a question (placeholder)
-$ uv run --active research-rag ask "Summarize the main contributions" --top-k 5
+$ research-rag ask "Summarize the main contributions" --top-k 5
 ```
 
 ## Web API
