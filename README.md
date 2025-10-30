@@ -44,7 +44,14 @@ git clone https://github.com/your-org/research-rag.git
 cd research-rag
 
 cp .env.example .env
+
+# Auto-export all following variables
+# Then stop auto-exporting variables
+set -a
 source .env
+set +a
+
+env | grep UV_PROJECT_ENVIRONMENT
 
 # installs dependencies into the path defined by UV_PROJECT_ENVIRONMENT
 uv sync
@@ -53,7 +60,7 @@ uv sync
 source "$UV_PROJECT_ENVIRONMENT/bin/activate"
 ```
 
-Configuration precedence: CLI flags > environment variables > `config.yaml` defaults. Set `APP_ENV` to `dev`, `test`, or `prod` to toggle profiles. Update `OPENAI_API_KEY` and switch `LLM_PROVIDER` to `openai` (or `ollama`) if you want to call an external model instead of the built-in local scorer.
+Configuration precedence: CLI flags > environment variables > `config.yaml` defaults. Set `APP_ENV` to `dev`, `test`, or `prod` to toggle profiles. Update `OPENAI_API_KEY` in your `.env` file and switch `LLM_PROVIDER` to `openai` (or `ollama`) if you want to call an external model instead of the built-in local scorer.
 
 ### Sample data
 
@@ -68,7 +75,7 @@ All commands support the global `--config` and `--debug` options.
 $ research-rag --help
 
 # Rank paper relevance for a query using the sample CSV
-$ research-rag relevance "self-supervised learning for computer vision" data/examples/computer_vision.csv
+$ research-rag --debug relevance "self-supervised learning for computer vision" data/examples/computer_vision.csv
 
 # Limit results and override the output directory
 $ research-rag relevance "self-supervised learning for computer vision" \
@@ -94,9 +101,14 @@ The web UI is a thin layer over the same services used by the CLI.
 
 ## Configuration Profiles
 
-- `.env`: machine-specific paths, API keys, secrets (never committed).
-- `config.yaml`: shared defaults, feature flags, and provider preferences.
-- Environment variable `APP_ENV` selects between `dev`, `test`, and `prod` profiles.
+Configuration is loaded from the following sources, in order of precedence:
+
+1.  **Environment variables**: Highest precedence. Use these for secrets and machine-specific settings.
+2.  **`.env` file**: Loads environment variables from a file. Ideal for local development.
+3.  **`config.yaml`**: Lowest precedence. Used for shared, non-sensitive defaults.
+
+- **`.env`**: Used for machine-specific settings and secrets. This file should never be committed to version control. It's the best place for `OPENAI_API_KEY`, and to specify your `LLM_PROVIDER` and `LLM_MODEL` for local development.
+- **`config.yaml`**: Contains shared defaults for the project, such as data directories and feature flags. This file is version controlled.
 
 ## Architecture
 
