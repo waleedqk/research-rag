@@ -10,3 +10,4 @@ pandas
 tabulate
 pymupdf
 rapidfuzz
+openai

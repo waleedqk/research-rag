@@ -2,6 +2,7 @@
 
 import os
 from typing import Iterable
+from urllib import response
 
 from openai import OpenAI
 from research_rag.adapters.llm_providers.base import BaseLLMProvider
@@ -20,12 +21,18 @@ class OpenAILLMProvider(BaseLLMProvider):
         """Execute the chat completion workflow for OpenAI."""
         messages = [message.model_dump() for message in request.messages]
 
-        stream = self.client.chat.completions.create(
+        use_stream = False  # True to enable streaming
+
+        response = self.client.chat.completions.create(
             model=self.model,
             messages=messages,
-            stream=True,
+            stream=use_stream,
         )
 
-        for chunk in stream:
-            if content := chunk.choices[0].delta.content:
-                yield Message(role="assistant", content=content)
+        if use_stream:
+            for chunk in response:
+                if content := chunk.choices[0].delta.content:
+                    yield Message(role="assistant", content=content)
+        else:
+            content = response.choices[0].message.content
+            yield Message(role="assistant", content=content)

@@ -2768,6 +2768,7 @@ version = "0.1.0"
 source = { editable = "." }
 dependencies = [
     { name = "loguru" },
+    { name = "openai" },
     { name = "pandas" },
     { name = "pydantic" },
     { name = "pydantic-settings" },
@@ -2810,6 +2811,7 @@ requires-dist = [
     { name = "loguru" },
     { name = "mypy", marker = "extra == 'dev'" },
     { name = "ollama", marker = "extra == 'ollama'" },
+    { name = "openai" },
     { name = "openai", marker = "extra == 'openai'" },
     { name = "pandas" },
     { name = "pydantic" },

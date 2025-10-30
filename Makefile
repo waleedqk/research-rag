@@ -1,22 +1,33 @@
 .PHONY: setup lock fmt lint test run web
 
 setup:
-@echo "Install dependencies with uv sync"
+	@echo "Installing dependencies with uv..."
+	set -a
+	. .env
+	set +a
+	uv sync --quiet
 
 lock:
-@echo "Refresh dependency lockfile"
+	@echo "Refreshing dependency lockfile..."
+	@uv lock
 
 fmt:
-@echo "Run ruff for formatting"
+	@echo "Formatting code with ruff..."
+	@ruff format .
 
 lint:
-@echo "Run ruff and mypy checks"
+	@echo "Linting code with ruff and mypy..."
+	@ruff check .
+	@mypy .
 
 test:
-@echo "Run pytest suite"
+	@echo "Running tests with pytest..."
+	@pytest
 
 run:
-@echo "Display CLI help entry point"
+	@echo "Running the research-rag CLI..."
+	@research-rag
 
 web:
-@echo "Start FastAPI server in development mode"
+	@echo "Starting the web server..."
+	@uvicorn research_rag.web.api.app:app --reload

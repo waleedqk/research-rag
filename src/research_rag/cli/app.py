@@ -2,17 +2,24 @@
 
 from __future__ import annotations
 
+from enum import Enum
 from pathlib import Path
 from typing import Optional
-
 import typer
 
 from research_rag.core.config import AppSettings, load_settings
+from research_rag.core.logging.setup import configure_logging, get_logger
 from research_rag.core.services.relevance import PaperRelevanceService
 
-
 app = typer.Typer(help="CLI entry point for the Research RAG assistant.")
+logger = get_logger(__name__)
 
+class LLMProvider(str, Enum):
+    """Supported LLM providers."""
+
+    LOCAL = "local"
+    OPENAI = "openai"
+    OLLAMA = "ollama"
 
 def _resolve_settings(ctx: typer.Context) -> AppSettings:
     settings: Optional[AppSettings] = ctx.obj
@@ -29,7 +36,7 @@ def main(
     debug: bool = typer.Option(False, help="Enable verbose logging."),
 ) -> None:
     """Root CLI callback responsible for wiring global options."""
-
+    configure_logging(debug)
     settings = load_settings(config)
     ctx.obj = settings
 
@@ -70,6 +77,13 @@ def relevance(
     csv_path: Path = typer.Argument(
         ..., help="Path to the CSV file with paper metadata."
     ),
+    provider: LLMProvider = typer.Option(
+        None,
+        "--provider",
+        "-p",
+        help="LLM provider to use for ranking.",
+        case_sensitive=False,
+    ),
     output_dir: Optional[Path] = typer.Option(
         None,
         "--output-dir",
@@ -89,7 +103,8 @@ def relevance(
 
     settings = _resolve_settings(ctx)
 
-    provider_name = settings.llm.provider
+    provider_name = provider.value if provider else settings.llm_provider
+    logger.debug(f"Using LLM provider: {provider_name}")
     llm_provider = None
 
     if provider_name == "openai":
@@ -100,11 +115,11 @@ def relevance(
             raise typer.BadParameter(
                 "OpenAI provider requires the optional 'openai' dependency."
             ) from exc
-        if not settings.llm.model:
+        if not settings.llm_model:
             raise typer.BadParameter("LLM model must be configured for the OpenAI provider")
         llm_provider = OpenAILLMProvider(
-            model=settings.llm.model,
-            api_key=settings.llm.api_key,
+            model=settings.llm_model,
+            api_key=settings.llm_api_key,
         )
     elif provider_name == "ollama":
         try:
@@ -114,9 +129,9 @@ def relevance(
             raise typer.BadParameter(
                 "Ollama provider requires the optional 'ollama' dependency."
             ) from exc
-        if not settings.llm.model:
+        if not settings.llm_model:
             raise typer.BadParameter("LLM model must be configured for the Ollama provider")
-        llm_provider = OllamaLLMProvider(model=settings.llm.model, host=settings.llm.host)
+        llm_provider = OllamaLLMProvider(model=settings.llm_model, host=settings.llm_host)
 
     service = PaperRelevanceService(
         llm_provider=llm_provider,
@@ -127,7 +142,6 @@ def relevance(
         response = service.rank_papers(
             query=query,
             csv_path=csv_path,
-            pdf_dir=settings.data.pdf_directory,
             output_dir=output_dir,
         )
         if not response.results:
