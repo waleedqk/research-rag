@@ -30,54 +30,65 @@ Research RAG Assistant is a CLI-first productivity tool for working with researc
 - Python 3.10+
 - [uv](https://github.com/astral-sh/uv) for dependency management
 
-### Installation
+### Setup
+
+1. Clone the repository and move into the project directory.
+2. Copy `.env.example` to `.env` and adjust values if desired. By default the file pins `UV_PROJECT_ENVIRONMENT=.venv/uv`, which tells `uv` exactly where to create the virtual environment for this project.
+3. Install [uv](https://github.com/astral-sh/uv) if you have not already done so (`python3 -m pip install uv`).
+4. Source the `.env` file to export the virtual environment path and other configuration defaults.
+5. Run `uv sync` to create/populate the environment at `UV_PROJECT_ENVIRONMENT`.
+6. Activate the environment so the `research-rag` CLI is available on your `$PATH`.
 
 ```bash
-# Clone the repository
-$ git clone https://github.com/your-org/research-rag.git
-$ cd research-rag
+git clone https://github.com/your-org/research-rag.git
+cd research-rag
 
-# Install uv (if you don't have it yet)
-$ python3 -m pip install uv
+cp .env.example .env
 
-# Create a virtual environment in a desired location, for example:
-$ python3 -m uv venv ~/uvs/research-rag-venv
+# Auto-export all following variables
+# Then stop auto-exporting variables
+set -a
+source .env
+set +a
 
-# Activate the virtual environment
-$ source ~/uvs/research-rag-venv/bin/activate
+env | grep UV_PROJECT_ENVIRONMENT
 
-# Install dependencies
-$ uv sync
+# installs dependencies into the path defined by UV_PROJECT_ENVIRONMENT
+uv sync
+
+# make the CLI script available
+source "$UV_PROJECT_ENVIRONMENT/bin/activate"
 ```
 
-### Configuration
+Configuration precedence: CLI flags > environment variables > `config.yaml` defaults. Set `APP_ENV` to `dev`, `test`, or `prod` to toggle profiles. Update `OPENAI_API_KEY` in your `.env` file and switch `LLM_PROVIDER` to `openai` (or `ollama`) if you want to call an external model instead of the built-in local scorer.
 
-```bash
-# Copy the example environment file
-$ cp .env.example .env
+### Sample data
 
-# Edit configuration defaults
-$ ${EDITOR:-nano} config.yaml
-```
-
-Configuration precedence: CLI flags > environment variables > `config.yaml` defaults. Set `APP_ENV` to `dev`, `test`, or `prod` to toggle profiles.
+The repository includes a tiny CSV in `data/examples/computer_vision.csv` that you can use to smoke-test the relevance workflow. Running the relevance command will also write a JSON summary to `data/derived/relevance/` (configurable via `OUTPUT_DIRECTORY` or the `--output-dir` flag).
 
 ## CLI Usage
 
 All commands support the global `--config` and `--debug` options.
 
 ```bash
-# View CLI help
-$ uv run research-rag --help
+# View CLI help (environment must be activated first)
+$ research-rag --help
+
+# Rank paper relevance for a query using the sample CSV
+$ research-rag --debug relevance "self-supervised learning for computer vision" data/examples/computer_vision.csv
+
+# Limit results and override the output directory
+$ research-rag relevance "self-supervised learning for computer vision" \
+    data/examples/computer_vision.csv --top-k 3 --output-dir ./data/derived/custom
 
 # Ingest documents (placeholder)
-$ uv run research-rag ingest /path/to/paper.pdf --csv /path/to/metadata.csv
+$ research-rag ingest /path/to/paper.pdf --csv /path/to/metadata.csv
 
 # Search indexed documents (placeholder)
-$ uv run research-rag search "attention is all you need" --top-k 5
+$ research-rag search "attention is all you need" --top-k 5
 
 # Ask a question (placeholder)
-$ uv run research-rag ask "Summarize the main contributions" --top-k 5
+$ research-rag ask "Summarize the main contributions" --top-k 5
 ```
 
 ## Web API
@@ -90,9 +101,14 @@ The web UI is a thin layer over the same services used by the CLI.
 
 ## Configuration Profiles
 
-- `.env`: machine-specific paths, API keys, secrets (never committed).
-- `config.yaml`: shared defaults, feature flags, and provider preferences.
-- Environment variable `APP_ENV` selects between `dev`, `test`, and `prod` profiles.
+Configuration is loaded from the following sources, in order of precedence:
+
+1.  **Environment variables**: Highest precedence. Use these for secrets and machine-specific settings.
+2.  **`.env` file**: Loads environment variables from a file. Ideal for local development.
+3.  **`config.yaml`**: Lowest precedence. Used for shared, non-sensitive defaults.
+
+- **`.env`**: Used for machine-specific settings and secrets. This file should never be committed to version control. It's the best place for `OPENAI_API_KEY`, and to specify your `LLM_PROVIDER` and `LLM_MODEL` for local development.
+- **`config.yaml`**: Contains shared defaults for the project, such as data directories and feature flags. This file is version controlled.
 
 ## Architecture
 

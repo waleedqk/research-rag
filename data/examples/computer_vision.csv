@@ -1,0 +1,4 @@
+title,year,summary,methods,results,notes
+Self-Supervised Vision Transformers,2023,Study on self-supervised learning for computer vision tasks using transformers,Vision Transformers,Shows improvements on ImageNet,Focuses on representation learning
+Contrastive Learning for Vision,2021,Explores contrastive self-supervised learning in computer vision,Contrastive learning,Outperforms supervised baselines,Includes SimCLR and MoCo comparisons
+Graph Neural Networks for Traffic Forecasting,2022,Focuses on traffic prediction with graph neural networks for smart cities,Graph neural networks,Improved forecasting accuracy,Not directly related to vision

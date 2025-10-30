@@ -1,11 +1,14 @@
 """Structured logging helpers for the assistant."""
-
+import sys
+from loguru import logger
 
 def configure_logging(debug: bool = False) -> None:
-    """Placeholder for loguru-based configuration."""
-    ...
+    """Configure loguru-based logging."""
+    logger.remove()
+    level = "DEBUG" if debug else "INFO"
+    logger.add(sys.stderr, level=level)
 
 
 def get_logger(name: str):
-    """Placeholder for acquiring a configured logger instance."""
-    ...
+    """Acquire a configured logger instance."""
+    return logger.bind(name=name)

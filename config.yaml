@@ -4,14 +4,10 @@ app:
   env: "dev"
   log_level: "INFO"
 
-providers:
-  llm: "openai"
-  embeddings: "sentence-transformers"
-  vector_store: "chromadb"
-
 data:
   source_dir: "data/source"
   derived_dir: "data/derived"
+  output_directory: "data/derived/relevance"
 
 features:
   enable_web: true
